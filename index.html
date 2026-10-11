@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Rise & Glide - ADHD Morning Routine Companion</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .btn-active:active {
+      transform: scale(0.97);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .timer-ring-circle {
+      transition: stroke-dashoffset 0.35s ease-out, stroke 0.4s ease;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+    @keyframes subtle-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.02); opacity: 0.95; }
+    }
+    .active-card-pulse {
+      animation: subtle-pulse 3s infinite ease-in-out;
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              teal: '#0D9488',
+              accent: '#3B82F6',
+              purple: '#8B5CF6',
+              amber: '#F59E0B',
+              rose: '#F43F5E',
+              emerald: '#10B981',
+              dark: '#0F172A',
+              card: '#1E293B',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-950 text-slate-100 flex items-center justify-center min-h-screen p-0 sm:p-4 select-none">
+
+  <!-- Android Device Mockup Shell -->
+  <div id="appContainer" class="w-full sm:max-w-md h-screen sm:h-[900px] bg-slate-900 sm:rounded-[44px] shadow-2xl flex flex-col overflow-hidden relative border-0 sm:border-8 sm:border-slate-800">
+    
+    <!-- Android Native-style Status Bar -->
+    <header class="w-full pt-3 pb-2 px-6 flex justify-between items-center bg-slate-900/90 backdrop-blur z-30 select-none border-b border-slate-800/60">
+      <div id="statusClock" class="text-xs font-semibold tracking-wide text-slate-300 mono">07:00</div>
+      <!-- Pill Notch / Camera Sensor -->
+      <div class="w-14 h-4 bg-slate-950 rounded-full flex items-center justify-center space-x-1.5 opacity-80">
+        <div class="w-2 h-2 rounded-full bg-slate-800"></div>
+        <div class="w-1.5 h-1.5 rounded-full bg-slate-900"></div>
+      </div>
+      <!-- Android System Icons -->
+      <div class="flex items-center space-x-1.5 text-slate-400 text-xs">
+        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 22l7.03-4.39C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
+        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98A16.88 16.88 0 0012 4zm0 3c3.08 0 5.9 1.15 8.08 3.06L12 18.06 3.92 10.06C6.1 8.15 8.92 7 12 7z"/></svg>
+        <span class="text-[10px] font-bold text-emerald-400">98%</span>
+      </div>
+    </header>
+
+    <!-- Top App Bar & ADHD Velocity Tracker -->
+    <div class="px-5 pt-3 pb-2 bg-slate-900 flex justify-between items-center">
+      <div>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping"></span>
+          Backward Planner
+        </span>
+        <h1 class="text-lg font-bold text-white flex items-center gap-1.5">
+          Morning Routine
+          <span id="streakBadge" class="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30 font-medium">🔥 5d Streak</span>
+        </h1>
+      </div>
+      
+      <!-- Audio Toggle and Settings -->
+      <div class="flex items-center space-x-1.5">
+        <button id="btnAudioToggle" class="p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 btn-active transition" title="Toggle Audio Chimes">
+          <svg id="audioIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+        </button>
+        <button id="btnOpenSettings" class="p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 btn-active transition" title="Adjust Schedule">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Backward-Planned Anchor Info & Timeline Bar -->
+    <div class="px-5 py-2.5 bg-slate-900 border-b border-slate-800/80 space-y-2">
+      <!-- Fixed Bus Anchor & Auto Wake Up Display -->
+      <div class="flex justify-between items-baseline text-xs font-medium">
+        <span class="text-slate-400">
+          Fixed Bus: <strong id="targetBusTimeDisplay" class="text-amber-300 mono font-bold">08:20 AM</strong>
+        </span>
+        <span id="calculatedWakeBadge" class="text-teal-300 font-bold mono bg-teal-950/60 border border-teal-800/80 px-2 py-0.5 rounded-md">
+          Wake: 06:55 AM
+        </span>
+      </div>
+
+      <!-- Segmented Graphical Timeline -->
+      <div class="h-2.5 w-full bg-slate-800/90 rounded-full overflow-hidden p-0.5 flex gap-1 relative shadow-inner" id="visualProgressBar">
+        <!-- Segments inserted dynamically -->
+      </div>
+
+      <!-- Buffer Cushion Bank Gauge -->
+      <div class="bg-slate-950/80 rounded-xl p-2 border border-slate-800 space-y-1">
+        <div class="flex justify-between items-center text-[11px]">
+          <span class="text-slate-400 flex items-center gap-1 font-medium">
+            <span id="bufferIndicatorDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            Safety Buffer Bank
+          </span>
+          <span id="bufferBankText" class="font-bold mono text-emerald-300">15m 00s</span>
+        </div>
+        <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div id="bufferBankBar" class="h-full bg-emerald-400 transition-all duration-300" style="width: 100%"></div>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center text-[10px] text-slate-400 pt-0.5">
+        <span id="routineStartTimeDisplay">Wake: 06:55 AM</span>
+        <span id="currentStatusBadge" class="text-emerald-400 font-medium">On Schedule</span>
+        <span id="collegeArrivalDisplay">College: 08:45 AM</span>
+      </div>
+    </div>
+
+    <!-- MAIN NAVIGATION TABS -->
+    <div class="flex border-b border-slate-800 bg-slate-900/60 px-5 text-sm font-semibold">
+      <button id="tabFocusBtn" class="flex-1 py-2.5 border-b-2 border-teal-400 text-teal-400 flex items-center justify-center gap-1.5 transition">
+        <span>🎯 Focus Mode</span>
+      </button>
+      <button id="tabRoutineBtn" class="flex-1 py-2.5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition">
+        <span>📋 Full Flow</span>
+      </button>
+      <button id="tabPackBtn" class="flex-1 py-2.5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition">
+        <span>🎒 College Bag</span>
+        <span id="packBadgeCount" class="bg-rose-500 text-[10px] text-white px-1.5 py-0.2 rounded-full font-bold">6</span>
+      </button>
+    </div>
+
+    <!-- VIEW 1: FOCUS MODE -->
+    <main id="viewFocus" class="flex-1 overflow-y-auto no-scrollbar p-5 flex flex-col justify-between">
+      
+      <!-- Current Step Banner -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span id="currentStepNumber" class="text-xs uppercase font-extrabold tracking-widest text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-lg">
+            Step 1 of 7
+          </span>
+          <span id="currentCategoryBadge" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-teal-500/20 text-teal-300 border border-teal-500/30">
+            ☀️ Wake Up
+          </span>
+        </div>
+
+        <!-- Overrun Alert Banner (Hidden by default, shown when task overruns) -->
+        <div id="focusOverrunTag" class="hidden bg-rose-500/20 border border-rose-500/40 text-rose-300 px-3 py-1.5 rounded-xl text-center text-xs font-bold animate-pulse">
+          ⚠️ Time Exceeded: Absorbing time from your Buffer Bank!
+        </div>
+
+        <div class="text-center pt-1">
+          <h2 id="focusTaskTitle" class="text-2xl font-extrabold text-white tracking-tight leading-snug">
+            Get Out of Bed on Time
+          </h2>
+          <p id="focusTaskTip" class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+            Feet on the floor right away. Drink 1 glass of water to kickstart alertness.
+          </p>
+        </div>
+
+        <!-- ADHD Circular Timer Gauge -->
+        <div class="relative w-52 h-52 mx-auto my-1 flex items-center justify-center">
+          <svg class="w-full h-full transform -rotate-90">
+            <circle cx="104" cy="104" r="88" stroke="#1E293B" stroke-width="12" fill="transparent" />
+            <circle id="timerCircleProgress" cx="104" cy="104" r="88" stroke="#0D9488" stroke-width="12" 
+                    fill="transparent" stroke-dasharray="552.9" stroke-dashoffset="0" 
+                    stroke-linecap="round" class="timer-ring-circle" />
+          </svg>
+
+          <!-- Inside Ring Content -->
+          <div class="absolute flex flex-col items-center justify-center text-center">
+            <span id="focusTimeDisplay" class="text-4xl font-extrabold mono tracking-tight text-white">05:00</span>
+            <span id="focusTimeSubtext" class="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Remaining</span>
+            <span id="estimatedFinishClock" class="text-[10px] text-amber-300 font-semibold mt-1 bg-slate-800/80 px-2 py-0.5 rounded-full">Bus: 08:20 AM</span>
+          </div>
+        </div>
+
+        <!-- Buffer and Sub-step Controls -->
+        <div class="flex justify-center gap-2">
+          <button id="btnPanicBuffer" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition btn-active flex items-center gap-1 shadow-sm">
+            <span>🛡️ Use 2m from Buffer</span>
+          </button>
+          <button id="btnSubtaskToggle" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition btn-active flex items-center gap-1">
+            <span>📝 Micro-steps (<span id="microStepCount">3</span>)</span>
+          </button>
+        </div>
+
+        <!-- Micro-steps Checklist -->
+        <div id="microStepPanel" class="hidden bg-slate-800/60 p-3 rounded-2xl border border-slate-700/60 space-y-2">
+          <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Breakdown micro-actions:</div>
+          <div id="microStepList" class="space-y-1.5 text-xs"></div>
+        </div>
+      </div>
+
+      <!-- Action Controller -->
+      <div class="pt-3 space-y-2.5">
+        <div class="grid grid-cols-4 gap-2">
+          <button id="btnTimerToggle" class="col-span-3 py-3 px-4 rounded-2xl font-bold bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 flex items-center justify-center gap-2 text-sm shadow-lg shadow-teal-900/30 btn-active transition">
+            <svg id="timerPlayIcon" class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <span id="timerPlayText">Start Step</span>
+          </button>
+
+          <button id="btnCompleteStep" class="col-span-1 py-3 px-2 rounded-2xl font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 flex flex-col items-center justify-center btn-active transition" title="Done! Next Step">
+            <svg class="w-5 h-5 stroke-current stroke-2 fill-none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span class="text-[10px] mt-0.5">Done</span>
+          </button>
+        </div>
+
+        <!-- Up Next Card -->
+        <div id="upNextPreviewCard" class="bg-slate-800/40 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <div class="flex items-center gap-2 truncate">
+            <span class="text-teal-400 font-bold">NEXT:</span>
+            <span id="upNextTitle" class="text-slate-200 font-semibold truncate">Brush Teeth & Shower</span>
+          </div>
+          <span id="upNextDuration" class="mono text-slate-400 text-[11px] whitespace-nowrap">20 min</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- VIEW 2: FULL ROUTINE FLOW OVERVIEW -->
+    <main id="viewRoutine" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-3 hidden">
+      <div class="flex justify-between items-center mb-1">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Sequence & Backward Times</h3>
+        <button id="btnQuickAddStep" class="text-xs font-semibold text-teal-400 hover:text-teal-300 flex items-center gap-1">
+          <span>+ Add Custom Step</span>
+        </button>
+      </div>
+
+      <div id="flowTasksContainer" class="space-y-2.5"></div>
+
+      <div class="p-3 bg-slate-800/40 rounded-2xl border border-slate-800 text-center space-y-1 mt-4">
+        <div class="text-xs text-slate-400">ADHD Routine Tip</div>
+        <p class="text-[11px] text-slate-300">Notice how every task's scheduled time is locked to when your bus arrives. Stay ahead of the cushion!</p>
+      </div>
+    </main>
+
+    <!-- VIEW 3: COLLEGE BAG & ESSENTIALS CHECKLIST -->
+    <main id="viewPack" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-3 hidden">
+      <div class="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-700/30 rounded-2xl p-3.5">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-sm text-blue-200 flex items-center gap-1.5">
+            <span>🎒 College Launch Checklist</span>
+          </h3>
+          <span id="packProgressText" class="text-xs font-bold text-blue-300 mono">0/6 Packed</span>
+        </div>
+        <p class="text-[11px] text-blue-300/80 mt-1">Check off items before leaving. Prevent doorway panic and forgotten passes.</p>
+        
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-2.5">
+          <div id="packProgressBar" class="bg-teal-400 h-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div id="bagItemsContainer" class="space-y-2 mt-2"></div>
+
+      <div class="pt-2 flex gap-2">
+        <input id="inputNewBagItem" type="text" placeholder="Add custom item (e.g. Lab coat)" class="flex-1 bg-slate-800 border border-slate-700 text-xs rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-teal-400">
+        <button id="btnAddBagItem" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold rounded-xl text-xs btn-active">
+          Add
+        </button>
+      </div>
+    </main>
+
+    <!-- ANDROID BOTTOM NAVIGATION BAR -->
+    <nav class="bg-slate-900 border-t border-slate-800 px-6 py-2.5 flex justify-between items-center z-20">
+      <button id="navFocus" class="flex flex-col items-center gap-0.5 text-teal-400 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span class="text-[10px] font-bold">Focus</span>
+      </button>
+
+      <button id="navRoutine" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        <span class="text-[10px] font-medium">Timeline</span>
+      </button>
+
+      <button id="navPack" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        <span class="text-[10px] font-medium">Pack</span>
+      </button>
+
+      <button id="btnResetRoutine" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 transition" title="Restart Today's Routine">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span class="text-[10px] font-medium">Reset</span>
+      </button>
+    </nav>
+
+    <!-- Android Bottom Gesture Bar -->
+    <div class="h-4 bg-slate-900 w-full flex justify-center items-center pb-1">
+      <div class="w-28 h-1 bg-slate-700 rounded-full opacity-60"></div>
+    </div>
+
+    <!-- SETTINGS & TIMING ADJUSTMENT MODAL -->
+    <div id="modalSettings" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden transition-opacity duration-300">
+      <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+        
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-white text-base">Adjust Schedule & Buffer Bank</h3>
+            <p class="text-xs text-slate-400">Fixed bus departure calculates your wake-up time</p>
+          </div>
+          <button id="btnCloseSettings" class="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-800">
+            ✕
+          </button>
+        </div>
+
+        <div class="p-4 overflow-y-auto space-y-4 no-scrollbar">
+          <!-- Fixed Bus Departure Control -->
+          <div class="space-y-3 bg-slate-800/40 p-3.5 rounded-2xl border border-slate-800">
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-[11px] font-bold uppercase text-amber-300">Fixed Bus Departure Time (Anchor)</label>
+                <span id="busFormattedPreview" class="text-xs font-semibold text-amber-300 mono">08:20 AM</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <!-- Hours -->
+                <div class="flex items-center bg-slate-900 border border-slate-700 rounded-xl p-1 flex-1">
+                  <button type="button" id="btnBusHourDec" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold flex items-center justify-center btn-active text-sm">－</button>
+                  <input id="inputBusHour" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="23" value="8" class="w-full bg-transparent text-center text-amber-300 font-bold mono text-base focus:outline-none" placeholder="HH">
+                  <button type="button" id="btnBusHourInc" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold flex items-center justify-center btn-active text-sm">＋</button>
+                </div>
+                <span class="text-slate-400 font-bold mono">:</span>
+                <!-- Minutes -->
+                <div class="flex items-center bg-slate-900 border border-slate-700 rounded-xl p-1 flex-1">
+                  <button type="button" id="btnBusMinDec" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold flex items-center justify-center btn-active text-sm">－</button>
+                  <input id="inputBusMin" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="59" step="5" value="20" class="w-full bg-transparent text-center text-amber-300 font-bold mono text-base focus:outline-none" placeholder="MM">
+                  <button type="button" id="btnBusMinInc" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold flex items-center justify-center btn-active text-sm">＋</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Buffer Cushion Configuration -->
+            <div class="pt-2 border-t border-slate-800/80">
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-[11px] font-bold uppercase text-emerald-300">Safety Buffer Cushion</label>
+                <span id="bufferSettingPreview" class="text-xs font-semibold text-emerald-300 mono">15 mins</span>
+              </div>
+              <div class="flex items-center bg-slate-900 border border-slate-700 rounded-xl p-1">
+                <button type="button" id="btnBufferDec" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold flex items-center justify-center btn-active text-sm">－</button>
+                <input id="inputBufferMinutes" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="60" step="5" value="15" class="w-full bg-transparent text-center text-emerald-300 font-bold mono text-base focus:outline-none" placeholder="Minutes">
+                <button type="button" id="btnBufferInc" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold flex items-center justify-center btn-active text-sm">＋</button>
+              </div>
+              <p class="text-[10px] text-slate-400 mt-1">Absorbs morning overruns before you are late for the bus.</p>
+            </div>
+
+            <!-- Resulting Calculated Wake-Up Time -->
+            <div class="pt-2 border-t border-slate-800/80 flex justify-between items-center">
+              <span class="text-xs text-slate-300">Resulting Wake-Up Time:</span>
+              <span id="calculatedWakePreview" class="text-sm font-bold text-teal-400 mono">06:55 AM</span>
+            </div>
+          </div>
+
+          <!-- Step Duration Adjustments -->
+          <div>
+            <h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Adjust Task Durations (Minutes)</h4>
+            <div id="settingsTaskList" class="space-y-2"></div>
+          </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-800 bg-slate-900 flex gap-2">
+          <button id="btnSaveSettings" class="flex-1 py-3 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-sm transition btn-active">
+            Save & Recalculate Timeline
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CELEBRATION MODAL ON ROUTINE COMPLETION -->
+    <div id="modalCelebration" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-teal-500/40 w-full max-w-sm rounded-3xl p-6 text-center space-y-4 shadow-2xl relative">
+        <div class="w-20 h-20 mx-auto rounded-full bg-teal-500/20 border-2 border-teal-400 flex items-center justify-center text-4xl animate-bounce">
+          🎓
+        </div>
+        <div>
+          <span class="text-xs uppercase font-extrabold tracking-widest text-teal-400">Mission Accomplished</span>
+          <h3 class="text-2xl font-black text-white mt-1">Ready for College!</h3>
+          <p class="text-xs text-slate-300 mt-2">
+            You successfully tackled all morning steps and arrived calmly. High five for crushing executive dysfunction!
+          </p>
+        </div>
+
+        <div class="bg-slate-800/80 p-3 rounded-2xl border border-slate-700 text-left text-xs space-y-1">
+          <div class="flex justify-between text-slate-300">
+            <span>Bus Status:</span>
+            <span class="font-bold text-teal-300" id="finalCollegeArrivalReport">Caught on Time</span>
+          </div>
+          <div class="flex justify-between text-slate-300">
+            <span>College Essentials:</span>
+            <span class="font-bold text-emerald-400" id="finalItemsReport">All Packed</span>
+          </div>
+        </div>
+
+        <button id="btnCloseCelebration" class="w-full py-3 bg-gradient-to-r from-teal-400 to-emerald-500 text-slate-950 font-extrabold rounded-xl text-sm btn-active shadow-lg shadow-teal-500/20">
+          Have an Awesome Day at College! 🚀
+        </button>
+      </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toastNotification" class="fixed top-12 left-1/2 -translate-x-1/2 bg-slate-800/95 border border-teal-500/50 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl pointer-events-none opacity-0 transition-opacity duration-300 flex items-center gap-2 z-50">
+      <span id="toastIcon">✨</span>
+      <span id="toastMessage">Step completed!</span>
+    </div>
+
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    /* Default ADHD Morning Routine Data */
+    const DEFAULT_ROUTINE = [
+      {
+        id: 'bed',
+        title: 'Get Out of Bed on Time',
+        category: 'Wake Up',
+        duration: 5,
+        tip: 'Feet immediately on floor. Open blinds for sunlight. Take 3 deep grounding breaths.',
+        microSteps: [
+          { text: 'Sit upright immediately', done: false },
+          { text: 'Drink glass of bedside water', done: false },
+          { text: 'Turn off alarm across the room', done: false }
+        ]
+      },
+      {
+        id: 'hygiene',
+        title: 'Brush Teeth & Shower',
+        category: 'Hygiene',
+        duration: 20,
+        tip: 'Warm shower to stimulate dopamine. Set sensory towel ready.',
+        microSteps: [
+          { text: 'Brush teeth (2 min timer)', done: false },
+          { text: 'Shampoo & body wash', done: false },
+          { text: 'Dry off & deodorant on', done: false }
+        ]
+      },
+      {
+        id: 'dress',
+        title: 'Get Dressed for College',
+        category: 'Dressing',
+        duration: 10,
+        tip: 'Put on predetermined outfit to avoid morning decision fatigue.',
+        microSteps: [
+          { text: 'Underwear & socks', done: false },
+          { text: 'College outfit / comfortable layers', done: false },
+          { text: 'Check weather appropriateness', done: false }
+        ]
+      },
+      {
+        id: 'breakfast',
+        title: 'Nutritious Breakfast & Meds',
+        category: 'Fuel',
+        duration: 15,
+        tip: 'Protein helps ADHD brains sustain focus throughout morning lectures.',
+        microSteps: [
+          { text: 'Take morning medications / vitamins with food', done: false },
+          { text: 'Eat protein-rich breakfast (eggs, oats, or shake)', done: false },
+          { text: 'Drink hydration water/tea', done: false }
+        ]
+      },
+      {
+        id: 'college_pack',
+        title: 'Pack Items Needed for College',
+        category: 'Prep',
+        duration: 10,
+        tip: 'Double-check student badge, money/bus card, and laptop charger!',
+        microSteps: [
+          { text: 'Verify college ID & wallet with cash/cards', done: false },
+          { text: 'Put laptop + charger in bag', done: false },
+          { text: 'Pack notebooks & stationery', done: false },
+          { text: 'Fill water bottle & snacks', done: false }
+        ]
+      },
+      {
+        id: 'bus_stop',
+        title: 'Walk to the Bus Stop on Time',
+        category: 'Transit',
+        duration: 10,
+        tip: 'Lock front door, check headphones, leave with 3-minute safety cushion.',
+        microSteps: [
+          { text: 'Coat & shoes on, house keys in pocket', done: false },
+          { text: 'Lock front door', done: false },
+          { text: 'Walk to bus stop (target 5 min before bus)', done: false }
+        ]
+      },
+      {
+        id: 'college_arrive',
+        title: 'Bus Ride & Arrive at College on Time',
+        category: 'Arrival',
+        duration: 25,
+        tip: 'Board bus, pay fare with money/pass, arrive calmly with time to settle.',
+        microSteps: [
+          { text: 'Board bus & tap bus pass / pay fare', done: false },
+          { text: 'Arrive at college stop', done: false },
+          { text: 'Walk into college lobby on time', done: false }
+        ]
+      }
+    ];
+
+    /* College Bag Essential Checklist Items */
+    const DEFAULT_BAG_ITEMS = [
+      { id: 'b1', name: 'Money / Travel Card / Bus Pass', checked: false, critical: true, icon: '💳' },
+      { id: 'b2', name: 'College Student ID Card & Lanyard', checked: false, critical: true, icon: '🪪' },
+      { id: 'b3', name: 'House Keys', checked: false, critical: true, icon: '🔑' },
+      { id: 'b4', name: 'College Laptop & Charger Cable', checked: false, critical: false, icon: '💻' },
+      { id: 'b5', name: 'Class Notebooks & Pens / Folder', checked: false, critical: false, icon: '📓' },
+      { id: 'b6', name: 'Water Bottle & Energy Snack', checked: false, critical: false, icon: '🍎' }
+    ];
+
+    /* State Manager */
+    let state = {
+      busDepartureTime: localStorage.getItem('adhd_bus_time') || '08:20',
+      initialBufferMinutes: Number(localStorage.getItem('adhd_initial_buffer')) || 15,
+      remainingBufferSeconds: (Number(localStorage.getItem('adhd_initial_buffer')) || 15) * 60,
+      tasks: JSON.parse(localStorage.getItem('adhd_tasks')) || DEFAULT_ROUTINE,
+      bagItems: JSON.parse(localStorage.getItem('adhd_bag_items')) || DEFAULT_BAG_ITEMS,
+      currentTaskIndex: 0,
+      activeTimerSeconds: 0,
+      isOverrun: false,
+      timerRunning: false,
+      timerInterval: null,
+      audioEnabled: true,
+      currentView: 'focus'
+    };
+
+    function saveState() {
+      try {
+        localStorage.setItem('adhd_tasks', JSON.stringify(state.tasks));
+        localStorage.setItem('adhd_bag_items', JSON.stringify(state.bagItems));
+        localStorage.setItem('adhd_bus_time', state.busDepartureTime);
+        localStorage.setItem('adhd_initial_buffer', state.initialBufferMinutes);
+      } catch (e) {
+        console.warn('Storage save failed:', e);
+      }
+    }
+
+    /* Safe Audio Synthesizer (Tone.js with Error Boundaries) */
+    let synth = null;
+    function initAudio() {
+      try {
+        if (window.Tone && Tone.context.state !== 'running') {
+          Tone.start();
+        }
+        if (window.Tone && !synth) {
+          synth = new Tone.PolySynth(Tone.Synth).toDestination();
+          synth.volume.value = -8;
+        }
+      } catch (e) {
+        console.warn('Audio init error:', e);
+      }
+    }
+
+    function playSound(type) {
+      if (!state.audioEnabled) return;
+      try {
+        initAudio();
+        if (!synth || !window.Tone) return;
+        const now = Tone.now();
+        if (type === 'tickGentle') {
+          synth.triggerAttackRelease('C5', '0.05', now);
+        } else if (type === 'timeWarning') {
+          synth.triggerAttackRelease('G4', '0.15', now);
+          synth.triggerAttackRelease('E4', '0.2', now + 0.16);
+        } else if (type === 'stepComplete') {
+          synth.triggerAttackRelease('C5', '0.08', now);
+          synth.triggerAttackRelease('E5', '0.08', now + 0.1);
+          synth.triggerAttackRelease('G5', '0.18', now + 0.2);
+        } else if (type === 'celebration') {
+          synth.triggerAttackRelease('C5', '0.1', now);
+          synth.triggerAttackRelease('E5', '0.1', now + 0.1);
+          synth.triggerAttackRelease('G5', '0.12', now + 0.22);
+          synth.triggerAttackRelease('C6', '0.3', now + 0.35);
+        }
+      } catch (e) {
+        console.warn('Audio playback error:', e);
+      }
+    }
+
+    /* Safe Toast Notification Helper */
+    let toastTimeout = null;
+    function showToast(message, icon = '✨') {
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMessage');
+      const toastIco = document.getElementById('toastIcon');
+      if (!toast || !toastMsg) return;
+
+      toastMsg.textContent = message;
+      if (toastIco) toastIco.textContent = icon;
+
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      toast.classList.add('opacity-100');
+
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2600);
+    }
+
+    /* Time Calculation Utilities with ADHD Backward Planning */
+    function parseTimeString(timeStr) {
+      const parts = (timeStr || '08:20').split(':').map(Number);
+      return { hours: parts[0] || 0, minutes: parts[1] || 0 };
+    }
+
+    function formatTime24To12(hours, minutes) {
+      const hNorm = ((hours % 24) + 24) % 24;
+      const period = hNorm >= 12 ? 'PM' : 'AM';
+      const h12 = hNorm % 12 || 12;
+      const mm = String(minutes).padStart(2, '0');
+      return `${h12}:${mm} ${period}`;
+    }
+
+    function addMinutesToTime(startStr, minsToAdd) {
+      const { hours, minutes } = parseTimeString(startStr);
+      let totalMins = hours * 60 + minutes + minsToAdd;
+      totalMins = ((totalMins % 1440) + 1440) % 1440;
+      const finalH = Math.floor(totalMins / 60);
+      const finalM = totalMins % 60;
+      return formatTime24To12(finalH, finalM);
+    }
+
+    function getPreBusTasks() {
+      return state.tasks.filter(t => t.id !== 'college_arrive');
+    }
+
+    function getTotalPreBusMinutes() {
+      return getPreBusTasks().reduce((sum, t) => sum + Number(t.duration), 0);
+    }
+
+    function computeWakeUpTime(busTimeStr, bufferMinutes) {
+      const { hours, minutes } = parseTimeString(busTimeStr);
+      const busTotalMinutes = hours * 60 + minutes;
+      const preBusDuration = getTotalPreBusMinutes();
+      const totalLeadMinutes = preBusDuration + Number(bufferMinutes);
+
+      let wakeMinutes = busTotalMinutes - totalLeadMinutes;
+      wakeMinutes = ((wakeMinutes % 1440) + 1440) % 1440;
+
+      const wakeH = Math.floor(wakeMinutes / 60);
+      const wakeM = wakeMinutes % 60;
+      const wake24 = `${String(wakeH).padStart(2, '0')}:${String(wakeM).padStart(2, '0')}`;
+      return {
+        wake24,
+        wakeFormatted: formatTime24To12(wakeH, wakeM),
+        preBusDuration,
+        totalLeadMinutes
+      };
+    }
+
+    function getCollegeArrivalTime(busTimeStr) {
+      const busRideTask = state.tasks.find(t => t.id === 'college_arrive');
+      const rideDuration = busRideTask ? Number(busRideTask.duration) : 25;
+      return addMinutesToTime(busTimeStr, rideDuration);
+    }
+
+    /* Render Top Graphical Timeline Bar */
+    function renderVisualTimeline() {
+      const container = document.getElementById('visualProgressBar');
+      if (!container) return;
+
+      const totalMins = state.tasks.reduce((sum, t) => sum + Number(t.duration), 0);
+      container.innerHTML = '';
+
+      state.tasks.forEach((task, index) => {
+        const seg = document.createElement('div');
+        const pct = (task.duration / Math.max(1, totalMins)) * 100;
+        seg.style.width = `${pct}%`;
+        seg.className = `h-full rounded-sm transition-all duration-300 relative cursor-pointer`;
+
+        if (index < state.currentTaskIndex) {
+          seg.classList.add('bg-emerald-500');
+        } else if (index === state.currentTaskIndex) {
+          seg.classList.add('bg-teal-400', 'active-card-pulse');
+        } else if (task.id === 'bus_stop') {
+          seg.classList.add('bg-amber-500/80');
+        } else {
+          seg.classList.add('bg-slate-700/60');
+        }
+
+        seg.addEventListener('click', () => {
+          selectTask(index);
+          showToast(`Jumped to: ${task.title}`, '📌');
+        });
+
+        container.appendChild(seg);
+      });
+
+      // Backward calculation info sync
+      const { wakeFormatted } = computeWakeUpTime(state.busDepartureTime, state.initialBufferMinutes);
+      const busObj = parseTimeString(state.busDepartureTime);
+      const busFormatted = formatTime24To12(busObj.hours, busObj.minutes);
+      const collegeArrivalFormatted = getCollegeArrivalTime(state.busDepartureTime);
+
+      const targetBusEl = document.getElementById('targetBusTimeDisplay');
+      const calcWakeBadgeEl = document.getElementById('calculatedWakeBadge');
+      const startDisplayEl = document.getElementById('routineStartTimeDisplay');
+      const collegeArrivalEl = document.getElementById('collegeArrivalDisplay');
+
+      if (targetBusEl) targetBusEl.textContent = busFormatted;
+      if (calcWakeBadgeEl) calcWakeBadgeEl.textContent = `Wake: ${wakeFormatted}`;
+      if (startDisplayEl) startDisplayEl.textContent = `Wake: ${wakeFormatted}`;
+      if (collegeArrivalEl) collegeArrivalEl.textContent = `College: ${collegeArrivalFormatted}`;
+
+      updateBufferBankDisplay();
+    }
+
+    function updateBufferBankDisplay() {
+      const totalSecs = Math.max(1, state.initialBufferMinutes * 60);
+      const currentSecs = Math.max(0, state.remainingBufferSeconds);
+      const pct = Math.min(100, (currentSecs / totalSecs) * 100);
+
+      const bar = document.getElementById('bufferBankBar');
+      const text = document.getElementById('bufferBankText');
+      const dot = document.getElementById('bufferIndicatorDot');
+      const statusBadge = document.getElementById('currentStatusBadge');
+      if (!bar || !text || !dot || !statusBadge) return;
+
+      const m = Math.floor(currentSecs / 60);
+      const s = currentSecs % 60;
+      text.textContent = `${m}m ${String(s).padStart(2, '0')}s`;
+      bar.style.width = `${pct}%`;
+
+      if (currentSecs <= 0) {
+        bar.className = 'h-full bg-rose-500 transition-all duration-300';
+        dot.className = 'w-2 h-2 rounded-full bg-rose-500 animate-ping';
+        text.className = 'font-bold mono text-rose-400';
+        statusBadge.textContent = '⚠️ Buffer Empty! Running Behind';
+        statusBadge.className = 'text-rose-400 font-bold';
+      } else if (pct < 35) {
+        bar.className = 'h-full bg-amber-400 transition-all duration-300';
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+        text.className = 'font-bold mono text-amber-300';
+        statusBadge.textContent = `Caution: ${m}m buffer left`;
+        statusBadge.className = 'text-amber-400 font-semibold';
+      } else {
+        bar.className = 'h-full bg-emerald-400 transition-all duration-300';
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        text.className = 'font-bold mono text-emerald-300';
+        statusBadge.textContent = `On Schedule (${m}m buffer)`;
+        statusBadge.className = 'text-emerald-400 font-medium';
+      }
+    }
+
+    /* Circular Timer Graphic Updater */
+    const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 88; // radius = 88, circumference approx 552.9
+
+    function updateTimerCircleGraphic(fractionRemaining) {
+      const circle = document.getElementById('timerCircleProgress');
+      if (!circle) return;
+
+      if (state.isOverrun) {
+        circle.setAttribute('stroke', '#F43F5E');
+        circle.style.strokeDashoffset = '0';
+        return;
+      }
+
+      const clampedFraction = Math.max(0, Math.min(1, fractionRemaining));
+      const offset = CIRCLE_CIRCUMFERENCE * (1 - clampedFraction);
+      circle.style.strokeDashoffset = offset;
+
+      if (fractionRemaining > 0.4) {
+        circle.setAttribute('stroke', '#0D9488');
+      } else if (fractionRemaining > 0.15) {
+        circle.setAttribute('stroke', '#F59E0B');
+      } else {
+        circle.setAttribute('stroke', '#F43F5E');
+      }
+    }
+
+    function formatMinutesSeconds(totalSecs) {
+      const absSecs = Math.abs(totalSecs);
+      const m = Math.floor(absSecs / 60);
+      const s = absSecs % 60;
+      const prefix = totalSecs < 0 ? '-' : '';
+      return `${prefix}${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    /* Update Focus Screen */
+    function updateFocusTaskView() {
+      const task = state.tasks[state.currentTaskIndex];
+      if (!task) return;
+
+      const stepNumEl = document.getElementById('currentStepNumber');
+      const catBadgeEl = document.getElementById('currentCategoryBadge');
+      const taskTitleEl = document.getElementById('focusTaskTitle');
+      const taskTipEl = document.getElementById('focusTaskTip');
+      const finishClockEl = document.getElementById('estimatedFinishClock');
+      const overrunTagEl = document.getElementById('focusOverrunTag');
+      const timeDisplayEl = document.getElementById('focusTimeDisplay');
+
+      if (stepNumEl) stepNumEl.textContent = `Step ${state.currentTaskIndex + 1} of ${state.tasks.length}`;
+      if (catBadgeEl) catBadgeEl.textContent = task.category;
+      if (taskTitleEl) taskTitleEl.textContent = task.title;
+      if (taskTipEl) taskTipEl.textContent = task.tip;
+
+      const busObj = parseTimeString(state.busDepartureTime);
+      const busFormatted = formatTime24To12(busObj.hours, busObj.minutes);
+      if (finishClockEl) finishClockEl.textContent = `Bus: ${busFormatted}`;
+
+      if (!state.isOverrun && state.activeTimerSeconds <= 0) {
+        state.activeTimerSeconds = task.duration * 60;
+        state.isOverrun = false;
+      }
+
+      if (overrunTagEl) overrunTagEl.classList.toggle('hidden', !state.isOverrun);
+      if (timeDisplayEl) timeDisplayEl.textContent = formatMinutesSeconds(state.activeTimerSeconds);
+      
+      updateTimerCircleGraphic(state.activeTimerSeconds / (Math.max(1, task.duration) * 60));
+
+      const nextTask = state.tasks[state.currentTaskIndex + 1];
+      const upNextCard = document.getElementById('upNextPreviewCard');
+      const upNextTitle = document.getElementById('upNextTitle');
+      const upNextDuration = document.getElementById('upNextDuration');
+
+      if (upNextCard && upNextTitle && upNextDuration) {
+        if (nextTask) {
+          upNextCard.classList.remove('hidden');
+          upNextTitle.textContent = nextTask.title;
+          upNextDuration.textContent = `${nextTask.duration} min`;
+        } else {
+          upNextCard.classList.remove('hidden');
+          upNextTitle.textContent = '🎉 Mission complete! All set for college!';
+          upNextDuration.textContent = 'Finish';
+        }
+      }
+
+      renderMicroSteps(task);
+      renderVisualTimeline();
+    }
+
+    function renderMicroSteps(task) {
+      const list = document.getElementById('microStepList');
+      const countLabel = document.getElementById('microStepCount');
+      if (!list) return;
+
+      const steps = task.microSteps || [];
+      if (countLabel) countLabel.textContent = steps.length;
+      list.innerHTML = '';
+
+      if (steps.length === 0) {
+        list.innerHTML = '<div class="text-slate-500 italic text-[11px]">No sub-steps for this task.</div>';
+        return;
+      }
+
+      steps.forEach((step) => {
+        const row = document.createElement('label');
+        row.className = 'flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer transition';
+        row.innerHTML = `
+          <input type="checkbox" ${step.done ? 'checked' : ''} class="rounded border-slate-600 text-teal-500 focus:ring-teal-500 h-4 w-4 bg-slate-700">
+          <span class="text-xs ${step.done ? 'line-through text-slate-500' : 'text-slate-200'}">${step.text}</span>
+        `;
+        row.querySelector('input').addEventListener('change', (e) => {
+          step.done = e.target.checked;
+          if (step.done) playSound('tickGentle');
+          saveState();
+          renderMicroSteps(task);
+        });
+        list.appendChild(row);
+      });
+    }
+
+    /* Timer Engine with Overrun Buffer Absorption */
+    function startTimer() {
+      if (state.timerRunning) return;
+      state.timerRunning = true;
+      initAudio();
+
+      const btnText = document.getElementById('timerPlayText');
+      const btnIcon = document.getElementById('timerPlayIcon');
+      if (btnText) btnText.textContent = 'Pause Step';
+      if (btnIcon) btnIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+
+      state.timerInterval = setInterval(() => {
+        if (!state.isOverrun) {
+          if (state.activeTimerSeconds > 0) {
+            state.activeTimerSeconds--;
+            const timeDisplay = document.getElementById('focusTimeDisplay');
+            if (timeDisplay) timeDisplay.textContent = formatMinutesSeconds(state.activeTimerSeconds);
+            
+            const currentTask = state.tasks[state.currentTaskIndex];
+            const totalSecs = (currentTask ? currentTask.duration : 5) * 60;
+            updateTimerCircleGraphic(state.activeTimerSeconds / totalSecs);
+
+            if (state.activeTimerSeconds === 60) {
+              playSound('timeWarning');
+              showToast('1 minute left on this step!', '⏳');
+            }
+          } else {
+            // Overrun begins
+            state.isOverrun = true;
+            const overrunTag = document.getElementById('focusOverrunTag');
+            if (overrunTag) overrunTag.classList.remove('hidden');
+            playSound('timeWarning');
+            showToast('Time exceeded! Absorbing extra time from buffer.', '⚠️');
+          }
+        } else {
+          // Negative seconds countdown in overrun
+          state.activeTimerSeconds--;
+          const timeDisplay = document.getElementById('focusTimeDisplay');
+          if (timeDisplay) timeDisplay.textContent = formatMinutesSeconds(state.activeTimerSeconds);
+
+          if (state.remainingBufferSeconds > 0) {
+            state.remainingBufferSeconds--;
+            updateBufferBankDisplay();
+            if (state.remainingBufferSeconds === 0) {
+              playSound('timeWarning');
+              showToast('Buffer depleted! Now cutting into bus time.', '🚨');
+            }
+          } else {
+            updateBufferBankDisplay();
+          }
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      state.timerRunning = false;
+      clearInterval(state.timerInterval);
+      const btnText = document.getElementById('timerPlayText');
+      const btnIcon = document.getElementById('timerPlayIcon');
+      if (btnText) btnText.textContent = 'Resume Step';
+      if (btnIcon) btnIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    }
+
+    function toggleTimer() {
+      if (state.timerRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function completeCurrentStep() {
+      playSound('stepComplete');
+      showToast(`Completed: ${state.tasks[state.currentTaskIndex].title}!`, '🌟');
+
+      state.isOverrun = false;
+      const overrunTag = document.getElementById('focusOverrunTag');
+      if (overrunTag) overrunTag.classList.add('hidden');
+
+      if (state.currentTaskIndex < state.tasks.length - 1) {
+        state.currentTaskIndex++;
+        state.activeTimerSeconds = state.tasks[state.currentTaskIndex].duration * 60;
+        updateFocusTaskView();
+        if (state.timerRunning) {
+          pauseTimer();
+          startTimer();
+        }
+      } else {
+        pauseTimer();
+        triggerRoutineCelebration();
+      }
+      renderRoutineListView();
+    }
+
+    function selectTask(index) {
+      if (index >= 0 && index < state.tasks.length) {
+        state.currentTaskIndex = index;
+        state.isOverrun = false;
+        const overrunTag = document.getElementById('focusOverrunTag');
+        if (overrunTag) overrunTag.classList.add('hidden');
+        state.activeTimerSeconds = state.tasks[index].duration * 60;
+        updateFocusTaskView();
+        switchTab('focus');
+      }
+    }
+
+    function addPanicBuffer() {
+      if (state.remainingBufferSeconds >= 120) {
+        state.remainingBufferSeconds -= 120;
+        state.activeTimerSeconds += 120;
+        if (state.activeTimerSeconds > 0) {
+          state.isOverrun = false;
+          const overrunTag = document.getElementById('focusOverrunTag');
+          if (overrunTag) overrunTag.classList.add('hidden');
+        }
+        playSound('tickGentle');
+        updateBufferBankDisplay();
+        updateFocusTaskView();
+        showToast('Transferred 2m from Buffer to this task.', '🛡️');
+      } else if (state.remainingBufferSeconds > 0) {
+        const remaining = state.remainingBufferSeconds;
+        state.activeTimerSeconds += remaining;
+        state.remainingBufferSeconds = 0;
+        updateBufferBankDisplay();
+        updateFocusTaskView();
+        showToast(`Used final ${remaining}s of buffer.`, '⏳');
+      } else {
+        state.activeTimerSeconds += 120;
+        updateFocusTaskView();
+        showToast('Buffer empty! Extra 2m taken from departure cushion.', '⚠️');
+      }
+    }
+
+    function triggerRoutineCelebration() {
+      playSound('celebration');
+      const allBagPacked = state.bagItems.every(i => i.checked);
+      const finalItems = document.getElementById('finalItemsReport');
+      const finalArrival = document.getElementById('finalCollegeArrivalReport');
+      
+      if (finalItems) finalItems.textContent = allBagPacked ? 'All Packed (100%)' : 'Check Bag Checklist!';
+      const busObj = parseTimeString(state.busDepartureTime);
+      const busStr = formatTime24To12(busObj.hours, busObj.minutes);
+      if (finalArrival) finalArrival.textContent = `On Track for ${busStr} Bus`;
+
+      const celebrationModal = document.getElementById('modalCelebration');
+      if (celebrationModal) celebrationModal.classList.remove('hidden');
+    }
+
+    /* Render Full Routine Flow Timeline */
+    function renderRoutineListView() {
+      const container = document.getElementById('flowTasksContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const { wake24 } = computeWakeUpTime(state.busDepartureTime, state.initialBufferMinutes);
+      let accumMinutes = 0;
+
+      state.tasks.forEach((task, index) => {
+        const startTimeStr = addMinutesToTime(wake24, accumMinutes);
+        accumMinutes += Number(task.duration);
+        const endTimeStr = addMinutesToTime(wake24, accumMinutes);
+
+        const card = document.createElement('div');
+        const isCurrent = index === state.currentTaskIndex;
+        const isPast = index < state.currentTaskIndex;
+        const isBusStop = task.id === 'bus_stop';
+
+        card.className = `p-3 rounded-2xl border transition-all cursor-pointer ${
+          isCurrent 
+            ? 'bg-slate-800 border-teal-500 shadow-md ring-1 ring-teal-500/50' 
+            : isPast 
+              ? 'bg-slate-900/60 border-slate-800/80 opacity-75' 
+              : 'bg-slate-800/40 border-slate-800 hover:bg-slate-800/70'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                isPast ? 'bg-emerald-500/20 text-emerald-400' : isCurrent ? 'bg-teal-500 text-slate-950' : isBusStop ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+              }">
+                ${isPast ? '✓' : index + 1}
+              </span>
+              <div>
+                <h4 class="text-xs font-bold ${isCurrent ? 'text-teal-300' : 'text-slate-200'}">
+                  ${task.title}
+                  ${isBusStop ? '<span class="ml-1 text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-mono">Bus Target</span>' : ''}
+                </h4>
+                <div class="text-[10px] text-slate-400 mono">${startTimeStr} → ${endTimeStr}</div>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold mono bg-slate-900/80 px-2 py-0.5 rounded-lg text-slate-300 border border-slate-700/60">${task.duration}m</span>
+              <span class="text-xs text-slate-400">➜</span>
+            </div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => selectTask(index));
+        container.appendChild(card);
+      });
+    }
+
+    /* College Bag Checklist */
+    function renderCollegeBagChecklist() {
+      const container = document.getElementById('bagItemsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      let checkedCount = 0;
+      state.bagItems.forEach((item) => {
+        if (item.checked) checkedCount++;
+
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between p-3 rounded-2xl border transition ${
+          item.checked ? 'bg-slate-900/40 border-slate-800/60 opacity-60' : 'bg-slate-800/60 border-slate-700/70'
+        }`;
+
+        row.innerHTML = `
+          <label class="flex items-center gap-3 cursor-pointer flex-1">
+            <input type="checkbox" ${item.checked ? 'checked' : ''} class="w-5 h-5 rounded-lg border-slate-600 text-teal-500 focus:ring-teal-400 bg-slate-700">
+            <span class="text-lg">${item.icon || '📦'}</span>
+            <div>
+              <span class="text-xs font-semibold ${item.checked ? 'line-through text-slate-400' : 'text-slate-100'}">${item.name}</span>
+              ${item.critical ? '<span class="ml-1.5 text-[9px] uppercase px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">Essential</span>' : ''}
+            </div>
+          </label>
+          <button class="btnDeleteBagItem text-slate-500 hover:text-rose-400 p-1.5 rounded-lg" title="Remove item">✕</button>
+        `;
+
+        row.querySelector('input').addEventListener('change', (e) => {
+          item.checked = e.target.checked;
+          if (item.checked) playSound('tickGentle');
+          saveState();
+          renderCollegeBagChecklist();
+        });
+
+        row.querySelector('.btnDeleteBagItem').addEventListener('click', (e) => {
+          e.stopPropagation();
+          state.bagItems = state.bagItems.filter(i => i.id !== item.id);
+          saveState();
+          renderCollegeBagChecklist();
+        });
+
+        container.appendChild(row);
+      });
+
+      const total = state.bagItems.length;
+      const pct = total === 0 ? 0 : Math.round((checkedCount / total) * 100);
+      const packProgText = document.getElementById('packProgressText');
+      const packProgBar = document.getElementById('packProgressBar');
+      const badge = document.getElementById('packBadgeCount');
+
+      if (packProgText) packProgText.textContent = `${checkedCount}/${total} Packed`;
+      if (packProgBar) packProgBar.style.width = `${pct}%`;
+      
+      if (badge) {
+        const remainingUnchecked = total - checkedCount;
+        badge.textContent = remainingUnchecked;
+        badge.className = remainingUnchecked === 0 
+          ? 'bg-emerald-500 text-[10px] text-white px-1.5 py-0.2 rounded-full font-bold' 
+          : 'bg-rose-500 text-[10px] text-white px-1.5 py-0.2 rounded-full font-bold';
+      }
+    }
+
+    function addCustomBagItem() {
+      const input = document.getElementById('inputNewBagItem');
+      if (!input) return;
+      const val = input.value.trim();
+      if (!val) return;
+
+      state.bagItems.push({
+        id: 'bag_' + Date.now(),
+        name: val,
+        checked: false,
+        critical: false,
+        icon: '📌'
+      });
+      input.value = '';
+      saveState();
+      renderCollegeBagChecklist();
+      showToast(`Added to pack list: ${val}`, '🎒');
+    }
+
+    /* Stepper Clamping Helper */
+    function clampInt(val, min, max, defaultVal = 0) {
+      const num = parseInt(val, 10);
+      if (isNaN(num)) return defaultVal;
+      return Math.min(Math.max(num, min), max);
+    }
+
+    function updateTimePreviews() {
+      const busHourInput = document.getElementById('inputBusHour');
+      const busMinInput = document.getElementById('inputBusMin');
+      const bufferInput = document.getElementById('inputBufferMinutes');
+
+      const bh = clampInt(busHourInput ? busHourInput.value : 8, 0, 23);
+      const bm = clampInt(busMinInput ? busMinInput.value : 20, 0, 59);
+      const buffer = clampInt(bufferInput ? bufferInput.value : 15, 0, 60, 15);
+
+      const bus24 = `${String(bh).padStart(2, '0')}:${String(bm).padStart(2, '0')}`;
+      
+      const busPreview = document.getElementById('busFormattedPreview');
+      const bufferPreview = document.getElementById('bufferSettingPreview');
+      const wakePreview = document.getElementById('calculatedWakePreview');
+
+      if (busPreview) busPreview.textContent = formatTime24To12(bh, bm);
+      if (bufferPreview) bufferPreview.textContent = `${buffer} mins`;
+
+      const { wakeFormatted } = computeWakeUpTime(bus24, buffer);
+      if (wakePreview) wakePreview.textContent = wakeFormatted;
+    }
+
+    /* Settings Modal Controls */
+    function openSettingsModal() {
+      const modal = document.getElementById('modalSettings');
+      if (!modal) return;
+      const { hours: bh, minutes: bm } = parseTimeString(state.busDepartureTime);
+
+      const busHourInput = document.getElementById('inputBusHour');
+      const busMinInput = document.getElementById('inputBusMin');
+      const bufferInput = document.getElementById('inputBufferMinutes');
+
+      if (busHourInput) busHourInput.value = bh;
+      if (busMinInput) busMinInput.value = bm;
+      if (bufferInput) bufferInput.value = state.initialBufferMinutes;
+      updateTimePreviews();
+
+      const listContainer = document.getElementById('settingsTaskList');
+      if (listContainer) {
+        listContainer.innerHTML = '';
+        state.tasks.forEach((task, idx) => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between p-2.5 rounded-xl bg-slate-800/80 border border-slate-700';
+          row.innerHTML = `
+            <div class="truncate pr-2">
+              <span class="text-xs font-semibold text-slate-200 block truncate">${task.title}</span>
+              <span class="text-[10px] text-slate-400">${task.category}</span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <input type="number" inputmode="numeric" min="1" max="120" value="${task.duration}" data-task-idx="${idx}" class="taskDurationInput w-14 bg-slate-900 border border-slate-700 text-teal-300 font-bold mono text-center rounded-lg text-xs py-1">
+              <span class="text-xs text-slate-400 font-mono">min</span>
+            </div>
+          `;
+          row.querySelector('input').addEventListener('input', updateTimePreviews);
+          listContainer.appendChild(row);
+        });
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      const modal = document.getElementById('modalSettings');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveSettings() {
+      const busHourInput = document.getElementById('inputBusHour');
+      const busMinInput = document.getElementById('inputBusMin');
+      const bufferInput = document.getElementById('inputBufferMinutes');
+
+      const bh = String(clampInt(busHourInput ? busHourInput.value : 8, 0, 23)).padStart(2, '0');
+      const bm = String(clampInt(busMinInput ? busMinInput.value : 20, 0, 59)).padStart(2, '0');
+      const buffer = clampInt(bufferInput ? bufferInput.value : 15, 0, 60, 15);
+
+      state.busDepartureTime = `${bh}:${bm}`;
+      state.initialBufferMinutes = buffer;
+      state.remainingBufferSeconds = buffer * 60;
+
+      const inputs = document.querySelectorAll('.taskDurationInput');
+      inputs.forEach(input => {
+        const idx = Number(input.dataset.taskIdx);
+        const val = Math.max(1, Number(input.value) || 5);
+        if (state.tasks[idx]) {
+          state.tasks[idx].duration = val;
+        }
+      });
+
+      state.activeTimerSeconds = state.tasks[state.currentTaskIndex].duration * 60;
+      state.isOverrun = false;
+      const overrunTag = document.getElementById('focusOverrunTag');
+      if (overrunTag) overrunTag.classList.add('hidden');
+
+      saveState();
+      closeSettingsModal();
+      updateFocusTaskView();
+      renderRoutineListView();
+      showToast('Bus anchor saved & wake-up recalculated!', '🚍');
+    }
+
+    /* Switch Views */
+    function switchTab(viewName) {
+      state.currentView = viewName;
+
+      const vFocus = document.getElementById('viewFocus');
+      const vRoutine = document.getElementById('viewRoutine');
+      const vPack = document.getElementById('viewPack');
+
+      if (vFocus) vFocus.classList.add('hidden');
+      if (vRoutine) vRoutine.classList.add('hidden');
+      if (vPack) vPack.classList.add('hidden');
+
+      const focusBtn = document.getElementById('tabFocusBtn');
+      const routineBtn = document.getElementById('tabRoutineBtn');
+      const packBtn = document.getElementById('tabPackBtn');
+
+      [focusBtn, routineBtn, packBtn].forEach(b => {
+        if (b) b.className = 'flex-1 py-2.5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition';
+      });
+
+      const navFocus = document.getElementById('navFocus');
+      const navRoutine = document.getElementById('navRoutine');
+      const navPack = document.getElementById('navPack');
+      [navFocus, navRoutine, navPack].forEach(n => {
+        if (n) n.className = 'flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 transition';
+      });
+
+      if (viewName === 'focus') {
+        if (vFocus) vFocus.classList.remove('hidden');
+        if (focusBtn) focusBtn.className = 'flex-1 py-2.5 border-b-2 border-teal-400 text-teal-400 flex items-center justify-center gap-1.5 transition font-bold';
+        if (navFocus) navFocus.className = 'flex flex-col items-center gap-0.5 text-teal-400 font-bold transition';
+        updateFocusTaskView();
+      } else if (viewName === 'routine') {
+        if (vRoutine) vRoutine.classList.remove('hidden');
+        if (routineBtn) routineBtn.className = 'flex-1 py-2.5 border-b-2 border-teal-400 text-teal-400 flex items-center justify-center gap-1.5 transition font-bold';
+        if (navRoutine) navRoutine.className = 'flex flex-col items-center gap-0.5 text-teal-400 font-bold transition';
+        renderRoutineListView();
+      } else if (viewName === 'pack') {
+        if (vPack) vPack.classList.remove('hidden');
+        if (packBtn) packBtn.className = 'flex-1 py-2.5 border-b-2 border-teal-400 text-teal-400 flex items-center justify-center gap-1.5 transition font-bold';
+        if (navPack) navPack.className = 'flex flex-col items-center gap-0.5 text-teal-400 font-bold transition';
+        renderCollegeBagChecklist();
+      }
+    }
+
+    function updateAndroidStatusClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const el = document.getElementById('statusClock');
+      if (el) el.textContent = `${h}:${m}`;
+    }
+
+    function resetEntireRoutine() {
+      pauseTimer();
+      state.currentTaskIndex = 0;
+      state.activeTimerSeconds = state.tasks[0].duration * 60;
+      state.isOverrun = false;
+      state.remainingBufferSeconds = state.initialBufferMinutes * 60;
+      const overrunTag = document.getElementById('focusOverrunTag');
+      if (overrunTag) overrunTag.classList.add('hidden');
+
+      state.tasks.forEach(t => {
+        if (t.microSteps) t.microSteps.forEach(s => s.done = false);
+      });
+      state.bagItems.forEach(i => i.checked = false);
+
+      saveState();
+      updateFocusTaskView();
+      renderRoutineListView();
+      renderCollegeBagChecklist();
+      switchTab('focus');
+      showToast('Routine & Buffer freshly reset for today!', '🔄');
+    }
+
+    /* Event Wire-up */
+    window.addEventListener('DOMContentLoaded', () => {
+      updateAndroidStatusClock();
+      setInterval(updateAndroidStatusClock, 15000);
+
+      // Tab navigation
+      const tFocus = document.getElementById('tabFocusBtn');
+      const tRoutine = document.getElementById('tabRoutineBtn');
+      const tPack = document.getElementById('tabPackBtn');
+      if (tFocus) tFocus.addEventListener('click', () => switchTab('focus'));
+      if (tRoutine) tRoutine.addEventListener('click', () => switchTab('routine'));
+      if (tPack) tPack.addEventListener('click', () => switchTab('pack'));
+
+      // Bottom nav
+      const nFocus = document.getElementById('navFocus');
+      const nRoutine = document.getElementById('navRoutine');
+      const nPack = document.getElementById('navPack');
+      if (nFocus) nFocus.addEventListener('click', () => switchTab('focus'));
+      if (nRoutine) nRoutine.addEventListener('click', () => switchTab('routine'));
+      if (nPack) nPack.addEventListener('click', () => switchTab('pack'));
+
+      // Timer buttons
+      const btnToggle = document.getElementById('btnTimerToggle');
+      const btnDone = document.getElementById('btnCompleteStep');
+      const btnBuffer = document.getElementById('btnPanicBuffer');
+      if (btnToggle) btnToggle.addEventListener('click', toggleTimer);
+      if (btnDone) btnDone.addEventListener('click', completeCurrentStep);
+      if (btnBuffer) btnBuffer.addEventListener('click', addPanicBuffer);
+      
+      // Micro-step toggle
+      const subtaskToggle = document.getElementById('btnSubtaskToggle');
+      if (subtaskToggle) {
+        subtaskToggle.addEventListener('click', () => {
+          const panel = document.getElementById('microStepPanel');
+          if (panel) panel.classList.toggle('hidden');
+        });
+      }
+
+      // Settings Modal
+      const btnOpenSet = document.getElementById('btnOpenSettings');
+      const btnCloseSet = document.getElementById('btnCloseSettings');
+      const btnSaveSet = document.getElementById('btnSaveSettings');
+      if (btnOpenSet) btnOpenSet.addEventListener('click', openSettingsModal);
+      if (btnCloseSet) btnCloseSet.addEventListener('click', closeSettingsModal);
+      if (btnSaveSet) btnSaveSet.addEventListener('click', saveSettings);
+
+      // Steppers for Bus Time & Buffer
+      const bindStepper = (btnId, inputId, step, min, max) => {
+        const btn = document.getElementById(btnId);
+        const input = document.getElementById(inputId);
+        if (!btn || !input) return;
+        btn.addEventListener('click', () => {
+          let current = clampInt(input.value, min, max);
+          current += step;
+          if (current > max) current = min;
+          if (current < min) current = max;
+          input.value = current;
+          updateTimePreviews();
+        });
+      };
+
+      bindStepper('btnBusHourInc', 'inputBusHour', 1, 0, 23);
+      bindStepper('btnBusHourDec', 'inputBusHour', -1, 0, 23);
+      bindStepper('btnBusMinInc', 'inputBusMin', 5, 0, 59);
+      bindStepper('btnBusMinDec', 'inputBusMin', -5, 0, 59);
+
+      bindStepper('btnBufferInc', 'inputBufferMinutes', 5, 0, 60);
+      bindStepper('btnBufferDec', 'inputBufferMinutes', -5, 0, 60);
+
+      ['inputBusHour', 'inputBusMin', 'inputBufferMinutes'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateTimePreviews);
+      });
+
+      // Quick Add Step in Routine Tab
+      const btnAddStep = document.getElementById('btnQuickAddStep');
+      if (btnAddStep) {
+        btnAddStep.addEventListener('click', () => {
+          const title = prompt('Enter custom routine task:');
+          if (title && title.trim()) {
+            state.tasks.splice(state.currentTaskIndex + 1, 0, {
+              id: 'custom_' + Date.now(),
+              title: title.trim(),
+              category: 'Personal',
+              duration: 5,
+              tip: 'Focus on this single task.',
+              microSteps: []
+            });
+            saveState();
+            renderRoutineListView();
+            renderVisualTimeline();
+            showToast(`Added: ${title}`, '➕');
+          }
+        });
+      }
+
+      // Bag item addition
+      const btnAddBag = document.getElementById('btnAddBagItem');
+      const inputBag = document.getElementById('inputNewBagItem');
+      if (btnAddBag) btnAddBag.addEventListener('click', addCustomBagItem);
+      if (inputBag) {
+        inputBag.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') addCustomBagItem();
+        });
+      }
+
+      // Celebration modal close
+      const btnCelebration = document.getElementById('btnCloseCelebration');
+      if (btnCelebration) {
+        btnCelebration.addEventListener('click', () => {
+          const modal = document.getElementById('modalCelebration');
+          if (modal) modal.classList.add('hidden');
+        });
+      }
+
+      // Routine Reset
+      const btnReset = document.getElementById('btnResetRoutine');
+      if (btnReset) btnReset.addEventListener('click', resetEntireRoutine);
+
+      // Audio Toggle
+      const audioBtn = document.getElementById('btnAudioToggle');
+      if (audioBtn) {
+        audioBtn.addEventListener('click', () => {
+          state.audioEnabled = !state.audioEnabled;
+          const icon = document.getElementById('audioIcon');
+          if (state.audioEnabled) {
+            if (icon) icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>';
+            showToast('Gentle chimes enabled', '🔔');
+            initAudio();
+          } else {
+            if (icon) icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>';
+            showToast('Chimes muted', '🔕');
+          }
+        });
+      }
+
+      // Initial View Setup
+      updateFocusTaskView();
+      renderRoutineListView();
+      renderCollegeBagChecklist();
+      renderVisualTimeline();
+    });
+  </script>
+</body>
+</html>
